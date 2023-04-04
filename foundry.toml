@@ -4,3 +4,10 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+
+remappings = [
+  'ds-test/=lib/forge-std/lib/ds-test/src/',
+  'forge-std/=lib/forge-std/src/',
+  'openzeppelin-contracts/=lib/openzeppelin-contracts/',
+  'solmate/=lib/solmate/src/'
+]
