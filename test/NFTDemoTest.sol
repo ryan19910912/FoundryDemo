@@ -11,18 +11,21 @@ contract NFTDemoTest is Test {
     NFTDemo private nft;
 
     function setUp() public {
-        // Deploy NFT contract
-        nft = new NFTDemo("NFT_tutorial", "TUT", "baseUri");
+        //初始化建立一個NFTDemo物件
+        nft = new NFTDemo(vm.envString("TEST_NFT_NAME"), vm.envString("TEST_NFT_SYMBOL"), vm.envString("TEST_NFT_BASE_URI"));
     }
 
+    //測試mint沒傳遞value
     function testFailNoMintPricePaid() public {
         nft.mintTo(address(1));
     }
 
+    //測試mint有傳遞value
     function testMintPricePaid() public {
         nft.mintTo{value: 0.08 ether}(address(1));
     }
 
+    //測試超過最大數量
     function testFailMaxSupplyReached() public {
         uint256 slot = stdstore
             .target(address(nft))
@@ -34,10 +37,12 @@ contract NFTDemoTest is Test {
         nft.mintTo{value: 0.08 ether}(address(1));
     }
 
+    //測試mint到零地址
     function testFailMintToZeroAddress() public {
         nft.mintTo{value: 0.08 ether}(address(0));
     }
 
+    //測試mint給owner
     function testNewMintOwnerRegistered() public {
         nft.mintTo{value: 0.08 ether}(address(1));
         uint256 slotOfNewOwner = stdstore
@@ -54,6 +59,7 @@ contract NFTDemoTest is Test {
         assertEq(address(ownerOfTokenIdOne), address(1));
     }
 
+    //測試增加餘額
     function testBalanceIncremented() public {
         nft.mintTo{value: 0.08 ether}(address(1));
         uint256 slotBalance = stdstore
@@ -74,6 +80,7 @@ contract NFTDemoTest is Test {
         assertEq(balanceSecondMint, 2);
     }
 
+    //測試合約安全接收
     function testSafeContractReceiver() public {
         Receiver receiver = new Receiver();
         nft.mintTo{value: 0.08 ether}(address(receiver));
@@ -87,11 +94,13 @@ contract NFTDemoTest is Test {
         assertEq(balance, 1);
     }
 
+    //測試合約不安全接收
     function testFailUnSafeContractReceiver() public {
         vm.etch(address(1), bytes("mock code"));
         nft.mintTo{value: 0.08 ether}(address(1));
     }
 
+    //測試owner提款功能
     function testWithdrawalWorksAsOwner() public {
         // Mint an NFT, sending eth to the contract
         Receiver receiver = new Receiver();
@@ -106,6 +115,7 @@ contract NFTDemoTest is Test {
         assertEq(payee.balance, priorPayeeBalance + nftBalance);
     }
 
+    //測試非owner提款功能
     function testWithdrawalFailsAsNotOwner() public {
         // Mint an NFT, sending eth to the contract
         Receiver receiver = new Receiver();
@@ -120,6 +130,7 @@ contract NFTDemoTest is Test {
     }
 }
 
+//安全交易傳輸接收器
 contract Receiver is ERC721TokenReceiver {
     function onERC721Received(
         address operator,

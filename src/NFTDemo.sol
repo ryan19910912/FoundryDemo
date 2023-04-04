@@ -5,16 +5,12 @@ import "solmate/tokens/ERC721.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-error MintPriceNotPaid();
-error MaxSupply();
-error NonExistentTokenURI();
-error WithdrawTransfer();
-
 contract NFTDemo is ERC721, Ownable  {
+    
     using Strings for uint256;
     string public baseURI;
     uint256 public currentTokenId;
-    uint256 public constant TOTAL_SUPPLY = 10_000;
+    uint256 public constant TOTAL_SUPPLY = 10000;
     uint256 public constant MINT_PRICE = 0.08 ether;
 
     constructor(
@@ -25,18 +21,22 @@ contract NFTDemo is ERC721, Ownable  {
         baseURI = _baseURI;
     }
 
+    //鑄造
     function mintTo(address recipient) public payable returns (uint256) {
         if (msg.value != MINT_PRICE) {
-            revert MintPriceNotPaid();
+            //如果給的錢不等於鑄造費用
+            revert ("Mint Price Not Paid");
         }
         uint256 newTokenId = ++currentTokenId;
         if (newTokenId > TOTAL_SUPPLY) {
-            revert MaxSupply();
+            //如果鑄造數量已達最大
+            revert ("Max Supply");
         }
         _safeMint(recipient, newTokenId);
         return newTokenId;
     }
 
+    //取得tokenUri
     function tokenURI(uint256 tokenId)
         public
         view
@@ -45,19 +45,23 @@ contract NFTDemo is ERC721, Ownable  {
         returns (string memory)
     {
         if (ownerOf(tokenId) == address(0)) {
-            revert NonExistentTokenURI();
+            //tokenUri不存在
+            revert ("Non Existent TokenURI");
         }
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
                 : "";
     }
 
+    //提款
     function withdrawPayments(address payable payee) external onlyOwner {
         uint256 balance = address(this).balance;
         (bool transferTx, ) = payee.call{value: balance}("");
         if (!transferTx) {
-            revert WithdrawTransfer();
+            revert ("Withdraw Transfer Fail");
+        } else {
+            revert ("Withdraw Transfer Success");
         }
     }
 }
