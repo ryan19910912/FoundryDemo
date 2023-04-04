@@ -7,12 +7,13 @@ import "../src/NFTDemo.sol";
 contract NFTDemoTest is Test {
 
     using stdStorage for StdStorage;
+    uint256 cost = 10000 wei;
 
     NFTDemo private nft;
 
     function setUp() public {
         //初始化建立一個NFTDemo物件
-        nft = new NFTDemo(vm.envString("TEST_NFT_NAME"), vm.envString("TEST_NFT_SYMBOL"), vm.envString("TEST_NFT_BASE_URI"));
+        nft = new NFTDemo(vm.envString("TEST_NFT_NAME"), vm.envString("TEST_NFT_SYMBOL"), vm.envString("TEST_NFT_BASE_URI"), vm.envString("TEST_NFT_UNREVEALED_URI"));
     }
 
     //測試mint沒傳遞value
@@ -22,7 +23,7 @@ contract NFTDemoTest is Test {
 
     //測試mint有傳遞value
     function testMintPricePaid() public {
-        nft.mintTo{value: 0.08 ether}(address(1));
+        nft.mintTo{value: cost}(address(1));
     }
 
     //測試超過最大數量
@@ -34,17 +35,17 @@ contract NFTDemoTest is Test {
         bytes32 loc = bytes32(slot);
         bytes32 mockedCurrentTokenId = bytes32(abi.encode(10000));
         vm.store(address(nft), loc, mockedCurrentTokenId);
-        nft.mintTo{value: 0.08 ether}(address(1));
+        nft.mintTo{value: cost}(address(1));
     }
 
     //測試mint到零地址
     function testFailMintToZeroAddress() public {
-        nft.mintTo{value: 0.08 ether}(address(0));
+        nft.mintTo{value: cost}(address(0));
     }
 
     //測試mint給owner
     function testNewMintOwnerRegistered() public {
-        nft.mintTo{value: 0.08 ether}(address(1));
+        nft.mintTo{value: cost}(address(1));
         uint256 slotOfNewOwner = stdstore
             .target(address(nft))
             .sig(nft.ownerOf.selector)
@@ -61,7 +62,7 @@ contract NFTDemoTest is Test {
 
     //測試增加餘額
     function testBalanceIncremented() public {
-        nft.mintTo{value: 0.08 ether}(address(1));
+        nft.mintTo{value: cost}(address(1));
         uint256 slotBalance = stdstore
             .target(address(nft))
             .sig(nft.balanceOf.selector)
@@ -73,7 +74,7 @@ contract NFTDemoTest is Test {
         );
         assertEq(balanceFirstMint, 1);
 
-        nft.mintTo{value: 0.08 ether}(address(1));
+        nft.mintTo{value: cost}(address(1));
         uint256 balanceSecondMint = uint256(
             vm.load(address(nft), bytes32(slotBalance))
         );
@@ -83,7 +84,7 @@ contract NFTDemoTest is Test {
     //測試合約安全接收
     function testSafeContractReceiver() public {
         Receiver receiver = new Receiver();
-        nft.mintTo{value: 0.08 ether}(address(receiver));
+        nft.mintTo{value: cost}(address(receiver));
         uint256 slotBalance = stdstore
             .target(address(nft))
             .sig(nft.balanceOf.selector)
@@ -97,7 +98,7 @@ contract NFTDemoTest is Test {
     //測試合約不安全接收
     function testFailUnSafeContractReceiver() public {
         vm.etch(address(1), bytes("mock code"));
-        nft.mintTo{value: 0.08 ether}(address(1));
+        nft.mintTo{value: cost}(address(1));
     }
 
     //測試owner提款功能
